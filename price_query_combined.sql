@@ -2,7 +2,7 @@ SELECT
 *,
 CASE WHEN --Outlier detection on each location using Tukey fences, with 1.5 IQR range
 	price_sqm BETWEEN GREATEST(q1-1.5*(q3-q1),0)
-								  AND q3+1.5*(q3-q1)
+	AND q3+1.5*(q3-q1)
 	THEN 1
 ELSE 0
 END AS outlier
@@ -39,7 +39,7 @@ FROM
 					SELECT * FROM fr_home_sales
 					WHERE -- Only focus on a few (large) cities for POC
 					LOWER(nom_commune) LIKE ANY (
-						ARRAY['paris %', 'lyon %', 'marseille %']
+						ARRAY['paris %', 'lyon %', 'bordeaux']
 					)
 				) AS loc_query
 				WHERE id_mutation IN (
