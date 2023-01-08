@@ -13,7 +13,7 @@ FROM
 		SELECT
 			id_mutation,
 			MAX(valeur_fonciere) AS price,
-			SUM(nombre_pieces_principales) AS nb_rooms,
+			CAST(SUM(nombre_pieces_principales) AS SMALLINT) AS nb_rooms,
 			SUM(surface_reelle_bati) AS total_surface,
 			SUM(
 				COALESCE(lot1_surface_carrez, 0)+ -- Avoid NULL values in SUM
@@ -22,8 +22,8 @@ FROM
 				COALESCE(lot4_surface_carrez, 0)+
 				COALESCE(lot5_surface_carrez, 0)
 			) AS carrez_surface,
-			DATE_PART('year', date_mutation) AS sale_year, -- Extract year
-			DATE_PART('week', date_mutation) AS sale_week, -- Extract week in year
+			CAST(DATE_PART('year', date_mutation) AS SMALLINT) AS sale_year, -- Extract year
+			CAST(DATE_PART('week', date_mutation) AS SMALLINT) AS sale_week, -- Extract week in year
 			MAX(id_parcelle) AS id_parcelle,
 			MAX(nom_commune) AS nom_commune
 		FROM ( -- Filter on cities
@@ -41,11 +41,11 @@ FROM
 
 		SELECT 
 			*, 
-			CASE -- Consider the total surface as proxy for carrez_surface if the latter is missing (should be a maximizer)
-				WHEN carrez_surface>0 THEN carrez_surface
-				WHEN NOT carrez_surface>0 AND total_surface>0 THEN total_surface
+			CASE -- Consider the carrez surface as proxy for total_surface if the latter is missing (should be a minimizer)
+				WHEN total_surface>0 THEN total_surface
+				WHEN NOT total_surface>0 AND carrez_surface>0 THEN carrez_surface
 				ELSE NULL
-			END AS paid_surface
+			END AS surface
 		FROM subquery
 	),
 	sqm_query AS -- Query with computation of price / sqm.
@@ -53,7 +53,7 @@ FROM
 				SELECT
 			*,
 			CASE -- Compute price per sq. meter (NULL if impossible to compute)
-				WHEN paid_surface>0 THEN price/paid_surface
+				WHEN surface>0 THEN price/surface
 				ELSE NULL
 			END AS price_sqm
 		FROM surface_corr
@@ -63,7 +63,7 @@ FROM
 		sqm_query.price AS price,
 		sqm_query.price_sqm AS price_sqm,
 		sqm_query.nb_rooms AS nb_rooms,
-		sqm_query.paid_surface AS paid_surface,
+		sqm_query.surface AS surface,
 		sqm_query.sale_year AS sale_year,
 		sqm_query.sale_week AS sale_week,
 		sqm_query.id_parcelle AS id_parcelle,
