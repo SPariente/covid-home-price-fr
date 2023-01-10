@@ -15,8 +15,8 @@ library(wrapr)
 db<-'fr_home_covid'
 host_db<-'localhost'
 db_port<-'5432'
-db_user<-'postgres'
-db_password<-'PostgreSQL!'
+#Hidden credentials
+source("credentials.R")
 
 con<-dbConnect(RPostgres::Postgres(),
                dbname=db, 
@@ -96,6 +96,7 @@ breakpoints <- c()
 #Define colors for plots
 colors <- c("Observed values" = "black", "Segmented regression fit" = "red")
 
+set.seed(50)
 for (loc in unique_cities) {
   cities <- cities %>% append(loc)
   
